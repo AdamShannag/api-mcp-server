@@ -1,0 +1,33 @@
+[
+  {
+    "name": "ListTodos",
+    "description": "Retrieves a list of all todo items. The response is a JSON array where each item contains details such as ID, title, completion status, and associated user ID.",
+    "request": {
+      "host": "jsonplaceholder.typicode.com",
+      "endpoint": "/todos",
+      "method": "GET",
+      "secure": true
+    }
+  },
+  {
+    "name": "GetTodo",
+    "description": "Retrieves a specific todo item by its ID",
+    "request": {
+      "host": "jsonplaceholder.typicode.com",
+      "endpoint": "/todos/:id",
+      "method": "GET",
+      "secure": true,
+      "pathParams": [
+        "id"
+      ]
+    },
+    "args": [
+      {
+        "name": "id",
+        "description": "The unique identifier of the todo item to retrieve.",
+        "required": true,
+        "type": "int"
+      }
+    ]
+  }
+]
