@@ -13,7 +13,7 @@ You can install the server in one of two ways:
 If you have Go installed, run:
 
 ```bash
-go install github.com/AdamShannag/api-mcp-server/cmd/api-mcp-server@v0.0.2
+go install github.com/AdamShannag/api-mcp-server/cmd/api-mcp-server@v0.1.0
 ```
 
 ### 2. Download a pre-built binary

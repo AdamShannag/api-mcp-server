@@ -8,6 +8,7 @@ import (
 	"github.com/AdamShannag/api-mcp-server/pkg/types"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
+	"log/slog"
 )
 
 type Option func(*Manager)
@@ -45,6 +46,13 @@ func (tm *Manager) AddTool(mcpServer *server.MCPServer, tool types.Tool) {
 
 	t := mcp.NewTool(tool.Name, options...)
 	mcpServer.AddTool(t, tm.toolHandlerFactory(tool))
+
+	slog.Debug("tool registered",
+		slog.Group("tool",
+			slog.String("name", tool.Name),
+			slog.Int("args", len(tool.Args)),
+		),
+	)
 }
 
 func (tm *Manager) toOptions(args []types.Arg) []mcp.ToolOption {
@@ -69,7 +77,7 @@ func (tm *Manager) toolHandlerFactory(tool types.Tool) func(ctx context.Context,
 
 		resp, err := tm.executor.Execute(ctx, tool.Request, args)
 		if err != nil {
-			return mcp.NewToolResultError(fmt.Sprintf("request failed: %v", err)), nil
+			return mcp.NewToolResultError(fmt.Sprintf("request failed: %v", err)), err
 		}
 
 		return mcp.NewToolResultText(resp), nil

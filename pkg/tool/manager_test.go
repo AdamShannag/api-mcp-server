@@ -119,7 +119,7 @@ func TestManager_ToolHandlerFactory_ExecuteError(t *testing.T) {
 
 	resp, err := handler(context.Background(), mcp.CallToolRequest{})
 
-	assert.NoError(t, err)
+	assert.Error(t, err)
 	assert.NotNil(t, resp)
 	assert.True(t, resp.IsError)
 	assert.Contains(t, resp.Content[0].(mcp.TextContent).Text, "request failed")

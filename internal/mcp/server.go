@@ -3,12 +3,16 @@ package mcp
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/AdamShannag/api-mcp-server/internal/auth"
+	"github.com/AdamShannag/api-mcp-server/internal/middleware"
 	"github.com/AdamShannag/api-mcp-server/pkg/tool"
 	"github.com/AdamShannag/api-mcp-server/pkg/types"
+	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
-	"log"
+	"log/slog"
+	"net/http"
 	"os"
 	"os/signal"
 	"strconv"
@@ -18,8 +22,8 @@ import (
 )
 
 const (
+	Version        = "0.1.0"
 	serverName     = "API MCP Server"
-	version        = "0.0.1"
 	defaultSseHost = "127.0.0.1"
 	defaultSsePort = 13080
 )
@@ -51,15 +55,17 @@ func NewServer(transport string, opts ...ServerOption) *Server {
 		server.WithLogging(),
 		server.WithRecovery(),
 		server.WithToolCapabilities(true),
+		server.WithHooks(s.getHooks()),
 	}
 
 	if s.auth != nil {
 		options = append(options, server.WithToolHandlerMiddleware(s.auth.Middleware()))
+		options = append(options, server.WithToolHandlerMiddleware(middleware.LoggingMiddleware))
 	}
 
 	s.server = server.NewMCPServer(
 		serverName,
-		version,
+		Version,
 		options...,
 	)
 
@@ -75,9 +81,12 @@ func (s *Server) Run() error {
 		)
 
 		s.startWithGracefulShutdown(func() {
-			log.Println("SSE server listening on " + s.host + ":" + s.port)
+			slog.Info("sse server started", slog.String("host", s.host), slog.String("port", s.port))
 			if err := sseServer.Start(s.host + ":" + s.port); err != nil {
-				log.Fatalf("Server error: %v", err)
+				if !errors.Is(err, http.ErrServerClosed) {
+					slog.Error("server error", slog.String("error", err.Error()))
+					os.Exit(1)
+				}
 			}
 		},
 			func(ctx context.Context) error {
@@ -86,7 +95,8 @@ func (s *Server) Run() error {
 
 	default:
 		if err := server.ServeStdio(s.server); err != nil {
-			log.Fatalf("Server error: %v", err)
+			slog.Error("server error", slog.String("error", err.Error()))
+			os.Exit(1)
 		}
 	}
 
@@ -109,6 +119,7 @@ func (s *Server) LoadTools(manager *tool.Manager) error {
 		manager.AddTool(s.server, t)
 	}
 
+	slog.Info("tools loaded", slog.Int("count", len(tools)))
 	return nil
 }
 
@@ -142,6 +153,28 @@ func WithPort(port string) ServerOption {
 	}
 }
 
+func (s *Server) getHooks() *server.Hooks {
+	hooks := &server.Hooks{}
+
+	hooks.AddOnRegisterSession(func(ctx context.Context, session server.ClientSession) {
+		slog.Info("client connected", slog.String("sessionId", session.SessionID()))
+	})
+
+	hooks.AddOnUnregisterSession(func(ctx context.Context, session server.ClientSession) {
+		slog.Warn("client disconnected", slog.String("sessionId", session.SessionID()))
+	})
+
+	hooks.AddBeforeAny(func(ctx context.Context, id any, method mcp.MCPMethod, message any) {
+		slog.Info("processing request", slog.String("method", string(method)))
+	})
+
+	hooks.AddOnError(func(ctx context.Context, id any, method mcp.MCPMethod, message any, err error) {
+		slog.Error("error occurred", slog.String("method", string(method)), slog.String("error", err.Error()))
+	})
+
+	return hooks
+}
+
 func (s *Server) startWithGracefulShutdown(initFunc func(), shutdownFunc func(context.Context) error) {
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
@@ -149,16 +182,16 @@ func (s *Server) startWithGracefulShutdown(initFunc func(), shutdownFunc func(co
 	go initFunc()
 
 	<-sigChan
-	log.Println("Shutting down server...")
+	slog.Info("shutting down server...")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
 	if err := shutdownFunc(ctx); err != nil {
-		log.Printf("Shutdown error: %v", err)
+		slog.Error("failed to shutdown server", slog.String("error", err.Error()))
 	}
 
-	log.Println("Server stopped")
+	slog.Info("server stopped")
 }
 
 // resolveEnvPlaceholders resolves placeholders like {{env VAR_NAME:default}} with environment values.

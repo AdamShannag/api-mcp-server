@@ -2,11 +2,15 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"github.com/AdamShannag/api-mcp-server/internal/auth"
 	"github.com/AdamShannag/api-mcp-server/internal/mcp"
+	"github.com/AdamShannag/api-mcp-server/internal/util"
 	"github.com/AdamShannag/api-mcp-server/pkg/request"
 	"github.com/AdamShannag/api-mcp-server/pkg/tool"
+	"github.com/lmittmann/tint"
 	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"time"
@@ -15,14 +19,32 @@ import (
 const httpClientTimeout = 30 * time.Second
 
 func main() {
-	var transport string
-	var toolsFilePath string
+	var (
+		transport     string
+		toolsFilePath string
+		showVersion   bool
+	)
 	flag.StringVar(&transport, "t", "stdio", "Transport type (stdio or sse)")
 	flag.StringVar(&transport, "transport", "stdio", "Transport type (stdio or sse)")
 
 	flag.StringVar(&toolsFilePath, "c", "./config.json", "Tools config file path")
 	flag.StringVar(&toolsFilePath, "config", "./config.json", "Tools config file path")
+
+	flag.BoolVar(&showVersion, "v", false, "Show version and exit")
+	flag.BoolVar(&showVersion, "version", false, "Show version and exit")
 	flag.Parse()
+
+	if showVersion {
+		fmt.Println("api-mcp-server", mcp.Version)
+		return
+	}
+
+	slog.SetDefault(slog.New(
+		tint.NewHandler(os.Stderr, &tint.Options{
+			Level:      util.GetLogLevel(os.Getenv("LOG_LEVEL")),
+			TimeFormat: time.DateTime,
+		}),
+	))
 
 	manager := tool.NewManager(request.NewExecutor(
 		request.WithHttpClient(&http.Client{Timeout: httpClientTimeout}),
