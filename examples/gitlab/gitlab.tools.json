@@ -1,12 +1,15 @@
 [
   {
     "name": "TriggerPipeline",
-    "description": "Triggers a pipeline using a GitLab trigger token for a specific project and branch.",
+    "description": "Triggers a GitLab CI pipeline for a specific project and branch or tag.",
     "request": {
       "host": "{{env GITLAB_API_HOST:gitlab.com}}",
-      "endpoint": "/api/v4/projects/:project_id/trigger/pipeline?token={{env GITLAB_TOKEN:not-set}}",
+      "endpoint": "/api/v4/projects/:project_id/pipeline",
       "method": "POST",
       "secure": true,
+      "headers": {
+        "PRIVATE-TOKEN": "{{env GITLAB_TOKEN:not-set}}"
+      },
       "queryParams": [
         "ref"
       ],
@@ -17,15 +20,14 @@
     "args": [
       {
         "name": "project_id",
-        "description": "The ID or URL-encoded path of the GitLab project (e.g. AdamShannag/test).",
+        "description": "The GitLab project identifier in the format `namespace/repo`, for example `AdamShannag/test`. If the user provides a GitLab project URL like `https://gitlab.com/AdamShannag/test`, extract and pass only the path segment: `AdamShannag/test`.",
         "required": true,
         "type": "string"
       },
       {
         "name": "ref",
-        "description": "The name of the branch or tag to trigger the pipeline on.",
-        "required": false,
-        "default": "master",
+        "description": "The name of the branch or tag to trigger the pipeline on (e.g., `main`, `v1.0.0`). If the user does not specify a branch or tag, default to `master`.",
+        "required": true,
         "type": "string"
       }
     ]
