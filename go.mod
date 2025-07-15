@@ -1,6 +1,6 @@
 module github.com/AdamShannag/api-mcp-server
 
-go 1.24.2
+go 1.24.4
 
 require (
 	github.com/mark3labs/mcp-go v0.33.0
