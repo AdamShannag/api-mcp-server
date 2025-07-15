@@ -2,7 +2,7 @@ name: Build & Verify Pipeline
 
 on:
   push:
-    branches: [ main ]
+    branches: [ master ]
     paths-ignore:
       - "**.md"
       - ".gitignore"
