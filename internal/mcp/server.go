@@ -126,12 +126,18 @@ func WithToolsFile(path string) ServerOption {
 
 func WithHost(host string) ServerOption {
 	return func(s *Server) {
+		if host == "" {
+			return
+		}
 		s.host = host
 	}
 }
 
 func WithPort(port string) ServerOption {
 	return func(s *Server) {
+		if port == "" {
+			return
+		}
 		s.port = port
 	}
 }

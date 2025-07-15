@@ -1,0 +1,58 @@
+[
+  {
+    "name": "ListIssues",
+    "description": "Fetches all issues from a specified GitLab project using the GitLab API.",
+    "request": {
+      "host": "{{env GITLAB_API_HOST:gitlab.com}}",
+      "endpoint": "/api/v4/projects/:project_id/issues",
+      "method": "GET",
+      "secure": true,
+      "headers": {
+        "PRIVATE-TOKEN": "{{env GITLAB_TOKEN:not-set}}"
+      },
+      "pathParams": [
+        "project_id"
+      ]
+    },
+    "args": [
+      {
+        "name": "project_id",
+        "description": "The ID or URL-encoded path of the GitLab project (e.g. AdamShannag/test).",
+        "required": true,
+        "type": "string"
+      }
+    ]
+  },
+  {
+    "name": "CreateIssue",
+    "description": "Creates a new issue in the specified GitLab project using the GitLab API.",
+    "request": {
+      "host": "{{env GITLAB_API_HOST:gitlab.com}}",
+      "endpoint": "/api/v4/projects/:project_id/issues",
+      "method": "POST",
+      "secure": true,
+      "headers": {
+        "PRIVATE-TOKEN": "{{env GITLAB_TOKEN:not-set}}",
+        "Content-Type": "application/json"
+      },
+      "pathParams": [
+        "project_id"
+      ],
+      "body": "issue_payload"
+    },
+    "args": [
+      {
+        "name": "project_id",
+        "description": "The ID of the GitLab project (e.g. AdamShannag/test).",
+        "required": true,
+        "type": "string"
+      },
+      {
+        "name": "issue_payload",
+        "description": "A JSON object containing the issue details, e.g. {\"title\": \"Bug report\", \"description\": \"Something is broken\"}.",
+        "required": true,
+        "type": "string"
+      }
+    ]
+  }
+]

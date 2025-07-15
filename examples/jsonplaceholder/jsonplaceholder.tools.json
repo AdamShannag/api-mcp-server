@@ -17,9 +17,6 @@
       "endpoint": "/todos/:id",
       "method": "GET",
       "secure": true,
-      "headers": {
-        "API_KEY": "Authorization {{env API_KEY:not-set}}"
-      },
       "pathParams": [
         "id"
       ]
