@@ -20,8 +20,8 @@ func main() {
 	flag.StringVar(&transport, "t", "stdio", "Transport type (stdio or sse)")
 	flag.StringVar(&transport, "transport", "stdio", "Transport type (stdio or sse)")
 
-	flag.StringVar(&toolsFilePath, "c", "./", "Tools config file path")
-	flag.StringVar(&toolsFilePath, "config", "./", "Tools config file path")
+	flag.StringVar(&toolsFilePath, "c", "./config.json", "Tools config file path")
+	flag.StringVar(&toolsFilePath, "config", "./config.json", "Tools config file path")
 	flag.Parse()
 
 	manager := tool.NewManager(request.NewExecutor(

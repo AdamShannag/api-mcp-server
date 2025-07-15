@@ -51,7 +51,11 @@ func (e *executor) Execute(ctx context.Context, request types.Request, argValues
 		}
 	}
 	if encoded := query.Encode(); encoded != "" {
-		endpoint += "?" + encoded
+		separator := "?"
+		if strings.Contains(endpoint, "?") {
+			separator = "&"
+		}
+		endpoint += separator + encoded
 	}
 
 	scheme := "http"

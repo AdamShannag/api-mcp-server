@@ -1,5 +1,36 @@
 [
   {
+    "name": "TriggerPipeline",
+    "description": "Triggers a pipeline using a GitLab trigger token for a specific project and branch.",
+    "request": {
+      "host": "{{env GITLAB_API_HOST:gitlab.com}}",
+      "endpoint": "/api/v4/projects/:project_id/trigger/pipeline?token={{env GITLAB_TOKEN:not-set}}",
+      "method": "POST",
+      "secure": true,
+      "queryParams": [
+        "ref"
+      ],
+      "pathParams": [
+        "project_id"
+      ]
+    },
+    "args": [
+      {
+        "name": "project_id",
+        "description": "The ID or URL-encoded path of the GitLab project (e.g. AdamShannag/test).",
+        "required": true,
+        "type": "string"
+      },
+      {
+        "name": "ref",
+        "description": "The name of the branch or tag to trigger the pipeline on.",
+        "required": false,
+        "default": "master",
+        "type": "string"
+      }
+    ]
+  },
+  {
     "name": "ListIssues",
     "description": "Fetches all issues from a specified GitLab project using the GitLab API.",
     "request": {
