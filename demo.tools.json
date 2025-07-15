@@ -13,10 +13,13 @@
     "name": "GetTodo",
     "description": "Retrieves a specific todo item by its ID",
     "request": {
-      "host": "jsonplaceholder.typicode.com",
+      "host": "{{env API_HOST:jsonplaceholder.typicode.com}}",
       "endpoint": "/todos/:id",
       "method": "GET",
       "secure": true,
+      "headers": {
+        "API_KEY": "Authorization {{env API_KEY:not-set}}"
+      },
       "pathParams": [
         "id"
       ]

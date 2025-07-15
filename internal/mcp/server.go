@@ -12,6 +12,7 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
+	"strings"
 	"syscall"
 	"time"
 )
@@ -99,8 +100,9 @@ func (s *Server) LoadTools(manager *tool.Manager) error {
 	}
 
 	var tools []types.Tool
-	if err = json.Unmarshal(data, &tools); err != nil {
-		return fmt.Errorf("failed to unmarshal JSON: %w", err)
+	decoder := json.NewDecoder(strings.NewReader(s.resolveEnvPlaceholders(string(data))))
+	if err = decoder.Decode(&tools); err != nil {
+		return fmt.Errorf("failed to decode JSON: %w", err)
 	}
 
 	for _, t := range tools {
@@ -151,4 +153,42 @@ func (s *Server) startWithGracefulShutdown(initFunc func(), shutdownFunc func(co
 	}
 
 	log.Println("Server stopped")
+}
+
+// resolveEnvPlaceholders resolves placeholders like {{env VAR_NAME:default}} with environment values.
+func (s *Server) resolveEnvPlaceholders(in string) string {
+	var b strings.Builder
+	b.Grow(len(in))
+
+	i := 0
+	for i < len(in) {
+		start := strings.Index(in[i:], "{{env ")
+		if start == -1 {
+			b.WriteString(in[i:])
+			break
+		}
+		start += i
+		b.WriteString(in[i:start])
+		end := strings.Index(in[start:], "}}")
+		if end == -1 {
+			b.WriteString(in[start:])
+			break
+		}
+		end += start
+
+		content := strings.TrimSpace(in[start+6 : end])
+		varName := strings.TrimSpace(content)
+		defaultValue := ""
+		if idx := strings.Index(content, ":"); idx != -1 {
+			varName = strings.TrimSpace(content[:idx])
+			defaultValue = strings.TrimSpace(content[idx+1:])
+		}
+		if val := os.Getenv(varName); val != "" {
+			b.WriteString(val)
+		} else {
+			b.WriteString(defaultValue)
+		}
+		i = end + 2
+	}
+	return b.String()
 }
