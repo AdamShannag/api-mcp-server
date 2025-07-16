@@ -50,7 +50,7 @@
     "args": [
       {
         "name": "project_id",
-        "description": "The ID or URL-encoded path of the GitLab project (e.g. AdamShannag/test).",
+        "description": "The ID of the GitLab project (e.g. AdamShannag/test).",
         "required": true,
         "type": "string"
       }

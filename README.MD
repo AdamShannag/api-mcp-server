@@ -13,7 +13,7 @@ You can install the server in one of two ways:
 If you have Go installed, run:
 
 ```bash
-go install github.com/AdamShannag/api-mcp-server/cmd/api-mcp-server@v0.1.0
+go install github.com/AdamShannag/api-mcp-server/cmd/api-mcp-server@v0.2.0
 ```
 
 ### 2. Download a pre-built binary
@@ -22,11 +22,13 @@ Download a binary from the [Releases page](https://github.com/AdamShannag/api-mc
 
 ## CLI Flags
 
-| Flag                | Description                      | Default         |
-|---------------------|----------------------------------|-----------------|
-| `--transport`, `-t` | Transport type: `stdio` or `sse` | `stdio`         |
-| `--config`, `-c`    | Path to JSON tool configuration  | `./config.json` |
-| `--version`, `-v`   | API MCP Server version           | `-`             |
+| Flag                | Description                                       | Default         |
+|---------------------|---------------------------------------------------|-----------------|
+| `--transport`, `-t` | Transport type: `stdio` or `sse`                  | `stdio`         |
+| `--config`, `-c`    | Path to JSON tool configuration                   | `./config.json` |
+| `--version`, `-v`   | API MCP Server version                            | `-`             |
+| `--metrics`, `-m`   | Enable Prometheus metrics and health check server | `-`             |
+| `--metrics-port`    | Metrics and health check server port              | `8080`          |
 
 ## Environment Variables
 

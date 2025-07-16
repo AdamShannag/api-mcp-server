@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/AdamShannag/api-mcp-server/internal/auth"
 	"github.com/AdamShannag/api-mcp-server/internal/mcp"
+	"github.com/AdamShannag/api-mcp-server/internal/monitoring"
 	"github.com/AdamShannag/api-mcp-server/internal/util"
 	"github.com/AdamShannag/api-mcp-server/pkg/request"
 	"github.com/AdamShannag/api-mcp-server/pkg/tool"
@@ -23,6 +24,8 @@ func main() {
 		transport     string
 		toolsFilePath string
 		showVersion   bool
+		enableMetrics bool
+		metricsPort   string
 	)
 	flag.StringVar(&transport, "t", "stdio", "Transport type (stdio or sse)")
 	flag.StringVar(&transport, "transport", "stdio", "Transport type (stdio or sse)")
@@ -32,6 +35,10 @@ func main() {
 
 	flag.BoolVar(&showVersion, "v", false, "Show version and exit")
 	flag.BoolVar(&showVersion, "version", false, "Show version and exit")
+
+	flag.BoolVar(&enableMetrics, "m", false, "Start metrics server")
+	flag.BoolVar(&enableMetrics, "metrics", false, "Start metrics server")
+	flag.StringVar(&metricsPort, "metrics-port", "8080", "Port for metrics endpoint (default: 8080)")
 	flag.Parse()
 
 	if showVersion {
@@ -55,6 +62,7 @@ func main() {
 		mcp.WithPort(os.Getenv("API_MCP_PORT")),
 		mcp.WithToolsFile(toolsFilePath),
 		mcp.WithAuth(auth.NewAuthenticator("sse", os.Getenv("API_MCP_SSE_API_KEY"))),
+		mcp.WithHttpServer(monitoring.NewHttpServer(enableMetrics, metricsPort)),
 	)
 
 	err := s.LoadTools(manager)

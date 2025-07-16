@@ -7,10 +7,12 @@ import (
 	"fmt"
 	"github.com/AdamShannag/api-mcp-server/internal/auth"
 	"github.com/AdamShannag/api-mcp-server/internal/middleware"
+	"github.com/AdamShannag/api-mcp-server/internal/monitoring"
 	"github.com/AdamShannag/api-mcp-server/pkg/tool"
 	"github.com/AdamShannag/api-mcp-server/pkg/types"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
+	"golang.org/x/sync/errgroup"
 	"log/slog"
 	"net/http"
 	"os"
@@ -22,7 +24,7 @@ import (
 )
 
 const (
-	Version        = "0.1.0"
+	Version        = "0.2.0"
 	serverName     = "API MCP Server"
 	defaultSseHost = "127.0.0.1"
 	defaultSsePort = 13080
@@ -37,7 +39,8 @@ type Server struct {
 	host          string
 	port          string
 
-	auth *auth.Authenticator
+	auth    *auth.Authenticator
+	httpSrv *http.Server
 }
 
 func NewServer(transport string, opts ...ServerOption) *Server {
@@ -73,34 +76,21 @@ func NewServer(transport string, opts ...ServerOption) *Server {
 }
 
 func (s *Server) Run() error {
-	switch s.transport {
-	case "sse":
-		sseServer := server.NewSSEServer(s.server,
-			server.WithBaseURL(fmt.Sprintf("http://:%s", s.port)),
-			server.WithSSEContextFunc(s.auth.FromRequest),
-		)
-
-		s.startWithGracefulShutdown(func() {
-			slog.Info("sse server started", slog.String("host", s.host), slog.String("port", s.port))
-			if err := sseServer.Start(s.host + ":" + s.port); err != nil {
-				if !errors.Is(err, http.ErrServerClosed) {
-					slog.Error("server error", slog.String("error", err.Error()))
-					os.Exit(1)
-				}
+	if s.httpSrv != nil && s.transport != "stdio" {
+		go func() {
+			slog.Info("metrics server started", slog.String("addr", s.httpSrv.Addr))
+			if err := s.httpSrv.ListenAndServe(); err != nil {
+				slog.Error("metrics server error", slog.String("error", err.Error()))
 			}
-		},
-			func(ctx context.Context) error {
-				return sseServer.Shutdown(ctx)
-			})
-
-	default:
-		if err := server.ServeStdio(s.server); err != nil {
-			slog.Error("server error", slog.String("error", err.Error()))
-			os.Exit(1)
-		}
+		}()
 	}
 
-	return nil
+	switch s.transport {
+	case "sse":
+		return s.runWithSSE()
+	default:
+		return server.ServeStdio(s.server)
+	}
 }
 
 func (s *Server) LoadTools(manager *tool.Manager) error {
@@ -153,15 +143,25 @@ func WithPort(port string) ServerOption {
 	}
 }
 
+func WithHttpServer(server *http.Server) ServerOption {
+	return func(s *Server) {
+		s.httpSrv = server
+	}
+}
+
 func (s *Server) getHooks() *server.Hooks {
 	hooks := &server.Hooks{}
 
 	hooks.AddOnRegisterSession(func(ctx context.Context, session server.ClientSession) {
 		slog.Info("client connected", slog.String("sessionId", session.SessionID()))
+		monitoring.SessionStarts.Inc()
+		monitoring.ActiveSessions.Inc()
 	})
 
 	hooks.AddOnUnregisterSession(func(ctx context.Context, session server.ClientSession) {
 		slog.Warn("client disconnected", slog.String("sessionId", session.SessionID()))
+		monitoring.SessionCloses.Inc()
+		monitoring.ActiveSessions.Dec()
 	})
 
 	hooks.AddBeforeAny(func(ctx context.Context, id any, method mcp.MCPMethod, message any) {
@@ -170,9 +170,39 @@ func (s *Server) getHooks() *server.Hooks {
 
 	hooks.AddOnError(func(ctx context.Context, id any, method mcp.MCPMethod, message any, err error) {
 		slog.Error("error occurred", slog.String("method", string(method)), slog.String("error", err.Error()))
+		monitoring.ErrorsTotal.WithLabelValues(string(method)).Inc()
 	})
 
 	return hooks
+}
+
+func (s *Server) runWithSSE() error {
+	sseServer := server.NewSSEServer(s.server,
+		server.WithBaseURL(fmt.Sprintf("http://:%s", s.port)),
+		server.WithSSEContextFunc(s.auth.FromRequest),
+	)
+
+	var runErr error
+
+	s.startWithGracefulShutdown(
+		func() {
+			slog.Info("sse server started", slog.String("host", s.host), slog.String("port", s.port))
+			if err := sseServer.Start(s.host + ":" + s.port); err != nil && !errors.Is(err, http.ErrServerClosed) {
+				slog.Error("server error", slog.String("error", err.Error()))
+				runErr = err
+			}
+		},
+		func(ctx context.Context) error {
+			var g errgroup.Group
+			g.Go(func() error { return sseServer.Shutdown(ctx) })
+			if s.httpSrv != nil {
+				g.Go(func() error { return s.httpSrv.Shutdown(ctx) })
+			}
+			return g.Wait()
+		},
+	)
+
+	return runErr
 }
 
 func (s *Server) startWithGracefulShutdown(initFunc func(), shutdownFunc func(context.Context) error) {

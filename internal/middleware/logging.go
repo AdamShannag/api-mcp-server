@@ -3,6 +3,7 @@ package middleware
 import (
 	"context"
 	"fmt"
+	"github.com/AdamShannag/api-mcp-server/internal/monitoring"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
 	"log/slog"
@@ -15,6 +16,8 @@ func LoggingMiddleware(next server.ToolHandlerFunc) server.ToolHandlerFunc {
 		start := time.Now()
 		sessionID := server.ClientSessionFromContext(ctx).SessionID()
 		toolName := req.Params.Name
+
+		monitoring.ToolInvocations.WithLabelValues(toolName).Inc()
 
 		argPairs := make([]string, 0, len(req.GetArguments()))
 		for k, v := range req.GetArguments() {
@@ -29,6 +32,8 @@ func LoggingMiddleware(next server.ToolHandlerFunc) server.ToolHandlerFunc {
 
 		result, err := next(ctx, req)
 		duration := time.Since(start)
+
+		monitoring.ToolLatency.WithLabelValues(toolName).Observe(duration.Seconds())
 
 		if err != nil {
 			slog.Error("tool call failed",
