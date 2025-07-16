@@ -28,7 +28,7 @@ Download a binary from the [Releases page](https://github.com/AdamShannag/api-mc
 | `--config`, `-c`    | Path to JSON tool configuration  | `./tools.config.json` |
 | `--version`, `-v`   | API MCP Server version           | `-`                   |
 
-## Environment Variables (for SSE transport)
+## Environment Variables
 
 | Variable              | Description                                                       | Default     |
 |-----------------------|-------------------------------------------------------------------|-------------|
