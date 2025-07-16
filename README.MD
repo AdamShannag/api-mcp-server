@@ -22,11 +22,11 @@ Download a binary from the [Releases page](https://github.com/AdamShannag/api-mc
 
 ## CLI Flags
 
-| Flag                | Description                      | Default               |
-|---------------------|----------------------------------|-----------------------|
-| `--transport`, `-t` | Transport type: `stdio` or `sse` | `stdio`               |
-| `--config`, `-c`    | Path to JSON tool configuration  | `./tools.config.json` |
-| `--version`, `-v`   | API MCP Server version           | `-`                   |
+| Flag                | Description                      | Default         |
+|---------------------|----------------------------------|-----------------|
+| `--transport`, `-t` | Transport type: `stdio` or `sse` | `stdio`         |
+| `--config`, `-c`    | Path to JSON tool configuration  | `./config.json` |
+| `--version`, `-v`   | API MCP Server version           | `-`             |
 
 ## Environment Variables
 
