@@ -4,6 +4,12 @@ A lightweight and extensible server for defining and executing API tools using
 the [MCP protocol](https://modelcontextprotocol.io).
 Supports dynamic HTTP requests, typed arguments, and multiple transports (`stdio`, `sse`).
 
+[![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/AdamShannag/api-mcp-server/build.yml?branch=master&label=CI%2FCD&logo=github)](https://github.com/AdamShannag/api-mcp-server/actions/workflows/build.yml)
+[![Go Version](https://img.shields.io/github/go-mod/go-version/AdamShannag/api-mcp-server?logo=go)](https://github.com/AdamShannag/api-mcp-server/blob/master/go.mod)
+[![Trivy Scan](https://img.shields.io/github/actions/workflow/status/AdamShannag/api-mcp-server/build.yml?branch=master&label=Trivy%20Security%20Scan&logo=aquasec)](https://github.com/AdamShannag/api-mcp-server/actions/workflows/build.yml)
+[![GitHub Release](https://img.shields.io/github/v/release/AdamShannag/api-mcp-server?sort=semver)](https://github.com/AdamShannag/api-mcp-server/releases/latest)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/AdamShannag/api-mcp-server/blob/master/LICENSE)
+
 ## Installation
 
 You can install the server in one of two ways:
